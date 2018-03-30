@@ -1,5 +1,9 @@
 package com.lucene.pojo;
 
+/**
+ *  实体R
+ * @author  abel-sun
+ */
 public class RPoint {
 	double lat;
 	double lon;

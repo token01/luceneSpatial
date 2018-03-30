@@ -44,144 +44,149 @@ import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;
 
+/**
+ * 空间搜索
+ *
+ * @author abel-sun
+ */
 @Component
 public class SpatialSearch {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	StandardAnalyzer a = new StandardAnalyzer();
-	IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_4, a);
-	private static Directory ramDirectory = new RAMDirectory();
-	private SpatialContext ctx;
-	private JtsSpatialContext jtsCtx;
-	private SpatialStrategy strategy;
-	private IndexSearcher searcher;
-	private IndexReader indexReader;
-	private IndexWriter indexWriter;
-	Random r = new Random();
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    StandardAnalyzer a = new StandardAnalyzer();
+    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_4_10_4, a);
+    private static Directory ramDirectory = new RAMDirectory();
+    private SpatialContext ctx;
+    private JtsSpatialContext jtsCtx;
+    private SpatialStrategy strategy;
+    private IndexSearcher searcher;
+    private IndexReader indexReader;
+    private IndexWriter indexWriter;
+    Random r = new Random();
 
-	public SpatialSearch() {
-		this.ctx = SpatialContext.GEO;
-		jtsCtx = JtsSpatialContext.GEO;
+    public SpatialSearch() {
+        this.ctx = SpatialContext.GEO;
+        jtsCtx = JtsSpatialContext.GEO;
 
-		SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
-		this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
-		try {
-			indexWriter = new IndexWriter(ramDirectory, iwc);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+        SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
+        this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
+        try {
+            indexWriter = new IndexWriter(ramDirectory, iwc);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
-	public void createIndex(int count, boolean isClose)
-			throws CorruptIndexException, LockObtainFailedException, IOException {
+    public void createIndex(int count, boolean isClose)
+            throws IOException {
 
-		for (int i = 0; i < count; i++) {
-			int id = r.nextInt(3000000);
-			indexWriter.updateDocument(new Term("id", "" + id),
-					newGeoDocument(id, "number_" + id, randomSingaporePoint()));
-		}
-		indexWriter.commit();
-		if (isClose)
-			indexWriter.close();
-	}
+        for (int i = 0; i < count; i++) {
+            int id = r.nextInt(3000000);
+            indexWriter.updateDocument(new Term("id", "" + id),
+                    newGeoDocument(id, "number_" + id, randomSingaporePoint()));
+        }
+        indexWriter.commit();
+        if (isClose)
+            indexWriter.close();
+    }
 
-	private void setSearchPath() {
-		try {
-			this.indexReader = DirectoryReader.open(ramDirectory);
-			this.searcher = new IndexSearcher(indexReader);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    private void setSearchPath() {
+        try {
+            this.indexReader = DirectoryReader.open(ramDirectory);
+            this.searcher = new IndexSearcher(indexReader);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
-	private Point randomSingaporePoint() {
-		int Low = 1239352;
-		int High = 1469751;
-		int lon = r.nextInt(High - Low) + Low;
+    private Point randomSingaporePoint() {
+        int Low = 1239352;
+        int High = 1469751;
+        int lon = r.nextInt(High - Low) + Low;
 
-		Low = 103635882;
-		High = 104004620;
-		int lat = r.nextInt(High - Low) + Low;
+        Low = 103635882;
+        High = 104004620;
+        int lat = r.nextInt(High - Low) + Low;
 
-		return ctx.makePoint(lat / 1000000.0, lon / 1000000.0);
-	}
+        return ctx.makePoint(lat / 1000000.0, lon / 1000000.0);
+    }
 
-	public Point makePoint(double lat, double lon) {
-		return ctx.makePoint(lat, lon);
-	}
+    public Point makePoint(double lat, double lon) {
+        return ctx.makePoint(lat, lon);
+    }
 
-	private Document newGeoDocument(int id, String misisdn, Shape shape) {
-		FieldType ft = new FieldType();
-		ft.setIndexed(true);
-		ft.setStored(true);
+    private Document newGeoDocument(int id, String misisdn, Shape shape) {
+        FieldType ft = new FieldType();
+        ft.setIndexed(true);
+        ft.setStored(true);
 
-		Document doc = new Document();
-		doc.add(new Field("id", "" + id, ft));
-		doc.add(new Field("misisdn", misisdn, ft));
-		for (IndexableField f : strategy.createIndexableFields(shape)) {
-			doc.add(f);
-		}
-		doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
-		return doc;
-	}
+        Document doc = new Document();
+        doc.add(new Field("id", "" + id, ft));
+        doc.add(new Field("misisdn", misisdn, ft));
+        for (IndexableField f : strategy.createIndexableFields(shape)) {
+            doc.add(f);
+        }
+        doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
+        return doc;
+    }
 
-	public int getDocNum() throws IOException {
-		setSearchPath();
-		return indexReader.numDocs();
-	}
+    public int getDocNum() throws IOException {
+        setSearchPath();
+        return indexReader.numDocs();
+    }
 
-	public SearchResult searchCircle(double radius, Point center) throws IOException {
-		setSearchPath();
-		SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeCircle(center.getX(), center.getY(),
-				DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
+    public SearchResult searchCircle(double radius, Point center) throws IOException {
+        setSearchPath();
+        SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeCircle(center.getX(), center.getY(),
+                DistanceUtils.dist2Degrees(radius, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
 
-		Filter filter = strategy.makeFilter(args);
-		TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
+        Filter filter = strategy.makeFilter(args);
+        TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
 
-		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-		SearchResult result = new SearchResult();
-		for (ScoreDoc s : scoreDocs) {
-			result.result.add(searcher.doc(s.doc).get("misisdn"));
-		}
-		result.total = topDocs.totalHits;
-		return result;
-	}
+        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+        SearchResult result = new SearchResult();
+        for (ScoreDoc s : scoreDocs) {
+            result.result.add(searcher.doc(s.doc).get("misisdn"));
+        }
+        result.total = topDocs.totalHits;
+        return result;
+    }
 
-	public SearchResult searchBBox(Double minLat, Double minLng, Double maxLat, Double maxLng) throws IOException {
-		setSearchPath();
-		SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin,
-				ctx.makeRectangle(minLat, maxLat, minLng, maxLng));
+    public SearchResult searchBBox(Double minLat, Double minLng, Double maxLat, Double maxLng) throws IOException {
+        setSearchPath();
+        SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin,
+                ctx.makeRectangle(minLat, maxLat, minLng, maxLng));
 
-		Filter filter = strategy.makeFilter(args);
-		TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
+        Filter filter = strategy.makeFilter(args);
+        TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
 
-		SearchResult result = new SearchResult();
-		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-		for (ScoreDoc s : scoreDocs) {
-			result.result.add(searcher.doc(s.doc).get("misisdn"));
-		}
-		result.total = topDocs.totalHits;
-		return result;
-	}
+        SearchResult result = new SearchResult();
+        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+        for (ScoreDoc s : scoreDocs) {
+            result.result.add(searcher.doc(s.doc).get("misisdn"));
+        }
+        result.total = topDocs.totalHits;
+        return result;
+    }
 
-	public SearchResult searchPolygon(List<Point> points) throws IOException, ParseException {
-		String joinedPoints = points.stream().map(x -> x.getX() + " " + x.getY()).collect(Collectors.joining(","));
-		String points_str = "POLYGON((" + joinedPoints + "))";
-		Shape shape = jtsCtx.readShapeFromWkt(points_str);
+    public SearchResult searchPolygon(List<Point> points) throws IOException, ParseException {
+        String joinedPoints = points.stream().map(x -> x.getX() + " " + x.getY()).collect(Collectors.joining(","));
+        String points_str = "POLYGON((" + joinedPoints + "))";
+        Shape shape = jtsCtx.readShapeFromWkt(points_str);
 
-		setSearchPath();
-		SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
+        setSearchPath();
+        SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
 
-		Filter filter = strategy.makeFilter(args);
-		TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
+        Filter filter = strategy.makeFilter(args);
+        TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, indexReader.numDocs());
 
-		SearchResult result = new SearchResult();
-		ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-		for (ScoreDoc s : scoreDocs) {
-			result.result.add(searcher.doc(s.doc).get("misisdn"));
-		}
-		result.total = topDocs.totalHits;
-		return result;
-	}
+        SearchResult result = new SearchResult();
+        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+        for (ScoreDoc s : scoreDocs) {
+            result.result.add(searcher.doc(s.doc).get("misisdn"));
+        }
+        result.total = topDocs.totalHits;
+        return result;
+    }
 }

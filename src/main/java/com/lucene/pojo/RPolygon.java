@@ -2,6 +2,11 @@ package com.lucene.pojo;
 
 import java.util.ArrayList;
 
+
+/**
+ *  实体Rp
+ * @author  abel-sun
+ */
 public class RPolygon {
 	ArrayList<RPoint> polygon = new ArrayList<RPoint>();
 

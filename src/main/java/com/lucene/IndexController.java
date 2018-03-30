@@ -21,6 +21,9 @@ import com.lucene.pojo.RPolygon;
 import com.lucene.pojo.SearchResult;
 import com.spatial4j.core.shape.Point;
 
+/**
+ * @author  abel-sun
+ */
 @ComponentScan("com.lucene.model")
 @RestController
 public class IndexController {
