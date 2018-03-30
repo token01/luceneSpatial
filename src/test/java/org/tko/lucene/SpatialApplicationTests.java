@@ -1,4 +1,4 @@
-package com.lucene;
+package org.tko.lucene;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -1,4 +1,4 @@
-package com.lucene.pojo;
+package org.tko.lucene.pojo;
 
 /**
  *  实体R

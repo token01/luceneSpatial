@@ -1,4 +1,4 @@
-package com.lucene.pojo;
+package org.tko.lucene.pojo;
 
 public class Status {
 	private int status;

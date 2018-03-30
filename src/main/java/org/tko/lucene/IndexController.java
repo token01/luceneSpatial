@@ -1,11 +1,11 @@
-package com.lucene;
+package org.tko.lucene;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.lucene.model.SpatialSearch;
-import com.lucene.pojo.Status;
+import org.tko.lucene.model.SpatialSearch;
+import org.tko.lucene.pojo.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.lucene.pojo.RPolygon;
-import com.lucene.pojo.SearchResult;
+import org.tko.lucene.pojo.RPolygon;
+import org.tko.lucene.pojo.SearchResult;
 import com.spatial4j.core.shape.Point;
 
 /**

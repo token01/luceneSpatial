@@ -1,4 +1,4 @@
-package com.lucene.pojo;
+package org.tko.lucene.pojo;
 
 import java.util.ArrayList;
 
